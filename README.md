@@ -135,4 +135,148 @@ Lógicamente, al haber muchas menos madres no fumadoras es normal que el valor q
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_cigsperday.png)
 
+### MomWtGain
 
+Este dato tiene una distribución muy extraña. Podría haber seguido una distribución normal, pero hace unos picos un poco rarao. En el Q-Q podemos ver como se escalona. 
+La desviación estandar es bastante superior a la media. 
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_momwtgain.png)
+
+
+### Visit
+
+Este dato tiene tres posibles valores: Del 0 al 3. La distribución no es normal. Más adelante veremos valores concretos, pero el 3 es el valor que más se repite.
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_visit.png)
+
+### MomEdLevel
+
+Los datos están bastante reraptidos entre los cuatro posibles valores. La media y la desviación estandar teníene valores muy cercanos.
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_momedlevel.png)
+
+## Tablas de frecuencias.
+
+Voy obtener tablas de frecuencias de las variables independientes para comprobar si tienen valores todas las observaciones.
+
+### Black
+
+```sas
+proc freq data=bweight; 
+  tables black;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_black.png)
+
+Vemos que no tenemos valores a missing, por lo que esta variable la dejamos como está.
+
+### Married
+
+```sas
+proc freq data=bweight; 
+  tables married;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_married.png)
+
+Al igual que la variable anterior, en el caso de _married_ no tenemos valores a missing, por lo que esta variable la dejamos como está.
+
+### Boy
+
+```sas
+proc freq data=bweight; 
+  tables boy;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_boy.png)
+
+No tenemos valores a missing. La variable la dejamos como viene de origen.
+
+### MomAge
+
+```sas
+proc freq data=bweight; 
+  tables MomAge;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_momage.png)
+
+No tenemos valores a missing. La variable la dejamos como viene de origen.
+
+### MomSmoke
+
+```sas
+proc freq data=bweight; 
+  tables MomSmoke;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_momsmoke.png)
+
+No tenemos valores a missing. La variable la dejamos como viene de origen.
+
+### CigsPerDay
+
+```sas
+proc freq data=bweight; 
+  tables CigsPerDay;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_cigsperday.png)
+
+No tenemos valores a missing. La variable la dejamos como viene de origen.
+
+### MomWtGain
+
+```sas
+proc freq data=bweight; 
+  tables MomWtGain;
+run;
+```
+
+En este caso no muestro la tabla de frecuencias, porque tiene muchos valores distintos y no me cabe. Aunque puedo decir que no tiene valores a missing, así que queda como está.
+
+### Visit
+
+```sas
+proc freq data=bweight; 
+  tables Visit;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_visit.png)
+
+No tenemos valores a missing. La variable la dejamos como viene de origen.
+
+### MomEdLevel
+
+```sas
+proc freq data=bweight; 
+  tables MomEdLevel;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/freq_momedlevel.png)
+
+No tenemos valores a missing. La variable la dejamos como viene de origen.
+
+## Coeficiones de correlación
+
+Vamos a sacar la tabla con los coeficientes de correlación para ver si hay variables que estén muy correladas entre si:
+
+```sas
+proc corr data=bweight;
+	var _numeric_;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/corr.png)
+
+En la tabla de correlaciones no se obseban valores por encima de 90. El valor más alto es de 0.82 para las variables MomSmoke y CigsPerDay. Claramente estas variables está realcionadas por lo que voy a eliminar la columna MomSmoke ya es que menos informativa. Solo indica si fuma o no la madre, pero CigsPerDay además de indicar si fuma o no, indica el número de cigarrillos que fuma al día. 
+
+Al eliminar la variable MomSmoke del conjunto de datos, al eliminar duplicados seguimos manteniendo las 48734 observaciones.
