@@ -15,7 +15,7 @@ data bweight;
  run;
 ```
 
-Vemos que el conjunto de datos secompone de 50.000 obsevaciones y 10 variables. 
+Vemos que el conjunto de datos se compone de 50.000 observaciones y 10 variables. 
 
 ## Análisis de variable objetivo
 
@@ -27,7 +27,7 @@ proc freq data=bweight;
 run;
 ```
 
-Vemos que los datos están muy repartidos. Hay que analizar si tenemos outlayers. Por suerte vemos que todas las filas tienen valor en la variable objetivo. 
+Vemos que los datos están muy repartidos. Hay que analizar si tenemos outliers. Por suerte vemos que todas las filas tienen valor en la variable objetivo. 
 
 Vamos a mostrar un gráfico de barras para ver como se reparten los datos.
 
@@ -39,7 +39,7 @@ run;
 
 ![grafico barras weight](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/grafico_barra_weight.png)
 
-Podemos observar que los datossiguen una distribución normal. Parece lógico que la mayoría de bebes al nacer tengan un peso que similar. En los extremos estarán, por ejemplo, nacimientos de bebes prematuros.
+Podemos observar que los datos siguen una distribución normal. Parece lógico que la mayoría de bebes al nacer tengan un peso que similar. En los extremos estarán, por ejemplo, nacimientos de bebes prematuros.
 
 Vamos a hacer un poco de limpieza eliminando las observaciones duplicadas:
 
@@ -65,7 +65,7 @@ run;
 
 ![Tabla medias](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/tabla_medias.png)
 
-Vemos que ninguna variable tiene valores "missing". Todas tienen 48734 valores. Vemos que la desviación estandar no tiene valores muy altos (menos en la variableobjetivo).
+Vemos que ninguna variable tiene valores "missing". Todas tienen 48734 valores. Vemos que la desviación estándar no tiene valores muy altos (menos en la variableobjetivo).
 
 Lo siguiente que hacemos es un TTest con la opción de gráficos activada:
 
@@ -82,9 +82,9 @@ Vamos a analizar la información que nos proporciona SAS:
 ### Weight
 
 * Como ya hemos visto antes, el peso sigue una distribución normal. 
-* La distribución estandar está muy alejada de la media.
+* La distribución estándar está muy alejada de la media.
 * Hay outliers por arriba y por abajo.
-* La mayoría de los datos siguen la recta Q-Q. Los valores más bajos son los que salen más desviados. Habŕia que averiguar si además de nacimientos también se han incluido abortos. En esos casos es posible que los fetos al no estar desarrollados arrojen estos datos que se devían del resto.
+* La mayoría de los datos siguen la recta Q-Q. Los valores más bajos son los que salen más desviados. Habría que averiguar si además de nacimientos también se han incluido abortos. En esos casos es posible que los fetos al no estar desarrollados arrojen estos datos que se desvían del resto.
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_weigth.png)
 
@@ -102,7 +102,7 @@ También es una variable dicotómica. En este caso vemos que hay más nacimiento
 
 ### Boy
 
-Variable dicotómica. Como se ve en la gráfica, en la media y la desviación estandar los valores está muy repartidos. 
+Variable dicotómica. Como se ve en la gráfica, en la media y la desviación estándar los valores está muy repartidos. 
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_boy.png)
 
@@ -116,9 +116,13 @@ data bweight;
  set bweight;
  MomAge = MomAge + 25;
 run;
+
+proc freq data=bweight; 
+  tables MomAge;
+run;
 ```
 
-Los datos se desvian un poco de una distribución normal. El valor mínimo es 16 años y el máximo 43 años. Es lógico que no haya datos de edades muy bajos y muy altos.  
+Los datos se desvían un poco de una distribución normal. El valor mínimo es 16 años y el máximo 43 años. Es lógico que no haya datos de edades muy bajos y muy altos.  
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_momage.png)
 
@@ -277,6 +281,6 @@ run;
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/corr.png)
 
-En la tabla de correlaciones no se obseban valores por encima de 90. El valor más alto es de 0.82 para las variables MomSmoke y CigsPerDay. Claramente estas variables está realcionadas por lo que voy a eliminar la columna MomSmoke ya es que menos informativa. Solo indica si fuma o no la madre, pero CigsPerDay además de indicar si fuma o no, indica el número de cigarrillos que fuma al día. 
+En la tabla de correlaciones no se observan valores por encima de 90. El valor más alto es de 0.82 para las variables MomSmoke y CigsPerDay. Claramente estas variables está relacionadas por lo que voy a eliminar la columna MomSmoke ya es que menos informativa. Solo indica si fuma o no la madre, pero CigsPerDay además de indicar si fuma o no, indica el número de cigarrillos que fuma al día. 
 
 Al eliminar la variable MomSmoke del conjunto de datos, al eliminar duplicados seguimos manteniendo las 48734 observaciones.
