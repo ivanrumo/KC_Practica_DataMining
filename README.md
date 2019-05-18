@@ -338,7 +338,7 @@ run;
 
 No tenemos valores a missing. La variable la dejamos como viene de origen.
 
-## Coeficiones de correlación
+## Coeficientes de correlación
 
 Vamos a sacar la tabla con los coeficientes de correlación para ver si hay variables que estén muy correladas entre si:
 
@@ -350,6 +350,130 @@ run;
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/corr.png)
 
-En la tabla de correlaciones no se observan valores por encima de 90. El valor más alto es de 0.82 para las variables MomSmoke y CigsPerDay. Claramente estas variables está relacionadas por lo que voy a eliminar la columna MomSmoke ya es que menos informativa. Solo indica si fuma o no la madre, pero CigsPerDay además de indicar si fuma o no, indica el número de cigarrillos que fuma al día. 
+En la tabla de correlaciones no se observan valores por encima de 90. El valor más alto es de 0.82 para las variables MomSmoke y CigsPerDay. Claramente estas variables está relacionadas por lo que voy a eliminar la columna CigsPerDay ya es que menos informativa.
 
-Al eliminar la variable MomSmoke del conjunto de datos, al eliminar duplicados seguimos manteniendo las 48734 observaciones.
+Al eliminar la variable CigsPerDay del conjunto de datos, al eliminar duplicados seguimos manteniendo las 48734 observaciones.
+
+## GMLSelect
+
+Vamos a usar GMLSelect para buscar las mejores variables independientes para un modelo predictivo. Para ello creo una macro que ejecute varios modelos con distintos porcentajes, semillas y métodos de selección. Los resultados se guardarán en un fichero para su posterior estudio.
+
+```sas
+
+%let lib1 = '/home/u38080140/ivanrubiomoreno/output/glm_bweight.txt';
+%macro glm_select (t_input, vardepen, varcategoricas, varindepen, interacciones, frac_ini, frac_fin, semi_ini, semi_fin, seleccion, selecc_name); 
+	
+	%do frac = &frac_ini. %to &frac_fin.;
+		data;
+		  fra=&frac/10;
+		  call symput('porcen',left(fra));
+		run;
+		
+		%do semilla = &semi_ini. %to &semi_fin.;
+			ods graphics on;
+			ods output SelectionSummary=modelos;
+			ods output SelectedEffects=efectos;
+			ods output Glmselect.SelectedModel.FitStatistics=ajuste;
+			
+			proc glmselect data=&t_input. plots=all seed=&semilla;
+			  partition fraction(validate=&porcen);
+			  class &varcategoricas.;
+			  model &vardepen. = &varindepen. &interacciones.
+			   / selection=&seleccion details=all stats=all; run;   
+			
+			ods graphics off;  
+			ods html close;   
+				  		
+			data union&semilla.; 
+			  i=12; 
+			  set efectos; 
+			  set ajuste point=i; 
+			run; *observación 12 ASEval;
+			
+			data  _null_;
+			  semilla=&semilla;
+			  selecc_name=&selecc_name;
+			  file &lib1 mod;
+			  set union&semilla.;
+			  put effects @155 nvalue1 @165 semilla @175 selecc_name;
+			run;
+			
+			proc sql; drop table union&semilla.; quit;
+		%end;
+	%end;
+	/*proc sql; drop t able modelos,efectos,ajuste,union; quit;*/
+%mend;
+```
+
+Creo otra macro que invoca a la anterior con los métodos de selección **stepwise_validate, stepwise_cv, forward y backward**.
+
+```sas
+%macro glm_select_selections (t_input, vardepen, varcategoricas, varindepen, interacciones, frac_ini, frac_fin, semi_ini, semi_fin);
+	/* borramos el contenido del fichero */
+	data  _null_;
+	 file &lib1  OLD;
+	run;
+	
+	%glm_select(&t_input., 
+					&vardepen., &varcategoricas., &varindepen., &interacciones., 
+					&frac_ini., &frac_fin., &semi_ini., &semi_fin., 
+					stepwise(select=aic choose=validate), 'stepwise_validate');
+	%glm_select(&t_input., 
+					&vardepen., &varcategoricas., &varindepen., &interacciones., 
+					&frac_ini., &frac_fin., &semi_ini., &semi_fin., 
+					stepwise(select=aic choose=cv), 'stepwise_cv');
+					
+	%glm_select(&t_input., 
+					&vardepen., &varcategoricas., &varindepen., &interacciones., 
+					&frac_ini., &frac_fin., &semi_ini., &semi_fin., 
+					forward, 'forward');
+
+	%glm_select(&t_input, 
+					&vardepen, &varcategoricas, &varindepen, &interacciones, 
+					&frac_ini, &frac_fin, &semi_ini, &semi_fin, 
+					backward, 'backward');
+%mend;
+```
+
+Ahora toca hacer pruebas. 
+
+Como vaiables categóricas indico: Black Married Boy Visit MomEdLevel MomSmoke
+Como vaiables independientes indico: MomAge MomWtGain Black Married Boy Visit MomEdLevel MomSmoke
+Como vaiables iteraciones indico: MomAge*Black MomAge*Married MomAge*Boy MomAge*MomSmoke MomAge*MomWtGain MomAge*Visit MomAge*MomEdLevel
+
+```sas
+%glm_select_selections(bweight, weight,
+  Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge MomSmoke MomWtGain Black Married Boy Visit MomEdLevel,
+  MomAge*Black MomAge*Married MomAge*Boy MomAge*MomSmoke MomAge*MomWtGain MomAge*Visit MomAge*MomEdLevel ,
+  3, 5, 12345, 12349);
+```
+
+Obtenemos valores de ASE muy altos. Entre 208000 y 215000.
+
+Lo siguiente que pruebo es no poner iteraciones para ver que variables independientes se repiten más en los modelos y crear combinaciones de estas variables para hacer iteraciones
+
+```sas
+%glm_select_selections(bweight, weight, 
+  Black Married Boy  Visit MomEdLevel MomSmoke,
+  MomAge  MomWtGain Black Married Boy Visit MomEdLevel,
+  MomSmoke ,
+  3, 5, 12345, 12346);
+```
+
+Las variables MomAge MomWtGain Black Married Boy MomSmoke siempre están presentes en todos los modelos. A veces entran  Visit o MomEdLevel o ambas. Así que pruebo como iteraciones las combinaciones de las variables MomAge MomWtGain Black Married Boy Visit MomEdLevel MomSmoke
+
+```sas
+%glm_select_selections(bweight, weight, 
+  Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge MomWtGain Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge*MomWtGain MomAge*Black MomAge*Married MomAge*Boy MomAge*Visit MomAge*MomEdLevel MomAge*MomSmoke
+  MomWtGain*Black MomWtGain*Married MomWtGain*Boy MomWtGain*Visit MomWtGain*MomEdLevel MomWtGain*MomSmoke
+  Black*Married Black*Boy Black*Visit Black*MomEdLevel Black*MomSmoke
+  Married*Boy Married*Visit Married*MomEdLevel Married*MomSmoke
+  Boy*Visit Boy*MomEdLevel Boy*MomSmoke
+  MomSmoke*MomEdLevel MomSmoke*Visit,
+  3, 5, 12345, 12349);
+```
+
+Seguimos con valores de ASE por encima de 200.000. Entiendo que los modelos entán bien y el problema está en que no he cocinado los datos bastante.
