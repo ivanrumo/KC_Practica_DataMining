@@ -97,7 +97,7 @@ Vemos que los datos están muy repartidos. Hay que analizar si tenemos outliers.
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/grafico_barra_weight.png)
 
-Se ve que tanto por arriba y por abajo hay algunos valores que se desvian mucho de la media, la mediana y la moda. Un 1% tienen valores por debajo de 1526 y otro 1% valores por encima de 4621.
+Se ve que tanto por arriba y por abajo hay algunos valores que se desvían mucho de la media, la mediana y la moda. Un 1% tienen valores por debajo de 1526 y otro 1% valores por encima de 4621.
 Decido eliminar ese 1% por encima y debajo ya que creo que es ruido que puede afectar negativamente a mi modelo.
 
 ```sas
@@ -184,7 +184,7 @@ Lógicamente, al haber muchas menos madres no fumadoras es normal que el valor q
 
 ### MomWtGain
 
-Este dato tiene una distribución muy extraña. Podría haber seguido una distribución normal, pero hace unos picos un poco rarao. En el Q-Q podemos ver como se escalona.
+Este dato tiene una distribución muy extraña. Podría haber seguido una distribución normal, pero hace unos picos un poco raro. En el Q-Q podemos ver como se escalona.
 La desviación estándar es bastante superior a la media.
 Se pueden ver valores negativos muy grandes lo cual parece raro y en valores positivos vemos muchos ourliers.
 
@@ -224,7 +224,7 @@ Este dato tiene tres posibles valores: Del 0 al 3. La distribución no es normal
 
 ### MomEdLevel
 
-Los datos están bastante reraptidos entre los cuatro posibles valores. La media y la desviación estandar teníene valores muy cercanos.
+Los datos están bastante repartidos entre los cuatro posibles valores. La media y la desviación estándar tienen valores muy cercanos.
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/dist_momedlevel.png)
 
@@ -359,7 +359,6 @@ Al eliminar la variable CigsPerDay del conjunto de datos, al eliminar duplicados
 Vamos a usar GMLSelect para buscar las mejores variables independientes para un modelo predictivo. Para ello creo una macro que ejecute varios modelos con distintos porcentajes, semillas y métodos de selección. Los resultados se guardarán en un fichero para su posterior estudio.
 
 ```sas
-
 %let lib1 = '/home/u38080140/ivanrubiomoreno/output/glm_bweight.txt';
 %macro glm_select (t_input, vardepen, varcategoricas, varindepen, interacciones, frac_ini, frac_fin, semi_ini, semi_fin, seleccion, selecc_name); 
 	
@@ -395,7 +394,7 @@ Vamos a usar GMLSelect para buscar las mejores variables independientes para un 
 			  selecc_name=&selecc_name;
 			  file &lib1 mod;
 			  set union&semilla.;
-			  put effects @155 nvalue1 @165 semilla @175 selecc_name;
+			  put effects @201 nvalue1 @215 semilla @225 selecc_name;
 			run;
 			
 			proc sql; drop table union&semilla.; quit;
@@ -439,7 +438,7 @@ Ahora toca hacer pruebas.
 
 Como vaiables categóricas indico: Black Married Boy Visit MomEdLevel MomSmoke
 Como vaiables independientes indico: MomAge MomWtGain Black Married Boy Visit MomEdLevel MomSmoke
-Como vaiables iteraciones indico: MomAge*Black MomAge*Married MomAge*Boy MomAge*MomSmoke MomAge*MomWtGain MomAge*Visit MomAge*MomEdLevel
+Como variables iteraciones indico: MomAge*Black MomAge*Married MomAge*Boy MomAge*MomSmoke MomAge*MomWtGain MomAge*Visit MomAge*MomEdLevel
 
 ```sas
 %glm_select_selections(bweight, weight,
@@ -476,4 +475,191 @@ Las variables MomAge MomWtGain Black Married Boy MomSmoke siempre están present
   3, 5, 12345, 12349);
 ```
 
-Seguimos con valores de ASE por encima de 200.000. Entiendo que los modelos entán bien y el problema está en que no he cocinado los datos bastante.
+Seguimos con valores de ASE por encima de 200.000. Entiendo que los modelos están bien y el problema está en que no he cocinado los datos bastante.
+
+Volvemos a analizar la variable objetivo
+
+```sas
+proc univariate data=bweight normal plot;
+ var weight;
+ qqplot weight / NORMAL (MU=EST SIGMA=EST COLOR=RED L=1);
+ HISTOGRAM /NORMAL(COLOR=MAROON W=4) CFILL = BLUE CFRAME = LIGR;
+ INSET MEAN STD /CFILL=BLANK FORMAT=5.2;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/weight_estudio2.png)
+
+Vemos que aún habiendo eliminado varios pesos todavía tenemos outliers en los pesos mínimos. Voy a eliminar el 1% de los pesos inferiores, es decir, los pesos iguales o menores de 2182
+
+```sas
+
+data bweight;
+   set bweight;
+   if weight <= 2182 or weight >= 4621 then delete;
+run;
+```
+
+Parece que ya no tenemos outliers en la variable objetivo
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/weight_estudio3.png)
+
+---
+
+Volvemos a estudiar la variable MomWtGain. 
+
+```sas
+proc univariate data=bweight normal plot;
+ var MomWtGain;
+ qqplot MomWtGain / NORMAL (MU=EST SIGMA=EST COLOR=RED L=1);
+ HISTOGRAM /NORMAL(COLOR=MAROON W=4) CFILL = BLUE CFRAME = LIGR;
+ INSET MEAN STD /CFILL=BLANK FORMAT=5.2;
+run;
+```
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/momwtgain_estudio2.png)
+
+En lo pesos superiores tenemos todavía outliers. Voy a eliminar las observaciones con pesos superiores a 30:
+
+```sas
+data bweight;
+   set bweight;
+   if MomWtGain <= -30 or MomWtGain >= 30 then delete;
+run;
+```
+
+---
+
+Tras hacer un poco más de limpieza, vuelvo a sacar unos modelos para ver como ha afectado estos cambios:
+
+```sas
+%glm_select_selections(bweight, weight, 
+  Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge MomWtGain Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge*MomWtGain MomAge*Black MomAge*Married MomAge*Boy MomAge*Visit MomAge*MomEdLevel MomAge*MomSmoke
+  MomWtGain*Black MomWtGain*Married MomWtGain*Boy MomWtGain*Visit MomWtGain*MomEdLevel MomWtGain*MomSmoke
+  Black*Married Black*Boy Black*Visit Black*MomEdLevel Black*MomSmoke
+  Married*Boy Married*Visit Married*MomEdLevel Married*MomSmoke
+  Boy*Visit Boy*MomEdLevel Boy*MomSmoke
+  MomSmoke*MomEdLevel MomSmoke*Visit,
+  3, 5, 12345, 12346);
+```
+
+Tras la nueva ejecución conseguimos valores de ASE ligeramente inferiores a 200.000.
+
+Vamos a sacar modelos mas numerosos para luego obtener los modelos que más veces se has seleccionados como los mejores:
+
+```sas
+%glm_select_selections(bweight, weight, 
+  Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge MomWtGain Black Married Boy Visit MomEdLevel MomSmoke,
+  MomAge*MomWtGain MomAge*Black MomAge*Married MomAge*Boy MomAge*Visit MomAge*MomEdLevel MomAge*MomSmoke
+  MomWtGain*Black MomWtGain*Married MomWtGain*Boy MomWtGain*Visit MomWtGain*MomEdLevel MomWtGain*MomSmoke
+  Black*Married Black*Boy Black*Visit Black*MomEdLevel Black*MomSmoke
+  Married*Boy Married*Visit Married*MomEdLevel Married*MomSmoke
+  Boy*Visit Boy*MomEdLevel Boy*MomSmoke
+  MomSmoke*MomEdLevel MomSmoke*Visit,
+  3, 5, 12345, 12400);
+```
+
+En total son 660 modelos ejecutados. Ahora vamos a volcar los resultados del fichero en un dataset para ordenar y agrupar los modelos obtenidos y ver cuales han sido los modelos que mas se repiten.
+
+```sas
+data seleccion;
+  INFILE  '/home/u38080140/ivanrubiomoreno/output/glm_bweight.txt';
+  length modelo $243;
+  input modelo $1-200 ase semilla tipo_seleccion $225-242;
+ run;
+
+proc sort  data=seleccion; by modelo;
+
+proc freq  data=seleccion; tables modelo / noprint out=frec_modelos; run;
+
+proc sort data=frec_modelos out=modelos_ordenados; by descending count; run;
+```
+
+Los modelos que más se repiten son:
+* MomWtGain Black Married Boy MomAge*MomSmoke
+* MomWtGain Black Married Boy MomEdLevel MomAge*MomSmoke
+* Black Married Boy MomEdLevel MomAge*MomSmoke MomWtGain*Boy
+* MomWtGain Boy MomAge*Boy MomAge*MomSmoke Black*MomSmoke Married*MomSmoke
+
+
+Vamos a usar estos modelos en un GLM cada uno para interpretar los resultados que obtenemos:
+
+```sas
+ods graphics on;
+
+proc glm data=bweight;
+  class Black Married Boy Visit MomEdLevel MomSmoke;
+  model weight = MomWtGain Black Married Boy MomAge*MomSmoke
+/ solution e;
+run;
+ods graphics off;
+```
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/resultados_gml_1.png)
+
+```sas
+ods graphics on;
+proc glm data=bweight;
+  class Black Married Boy Visit MomEdLevel MomSmoke;
+  model weight = MomWtGain Black Married Boy MomEdLevel MomAge*MomSmoke
+/ solution e;
+run;
+ods graphics off;
+```
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/resultados_gml_2.png)
+
+```sas
+ods graphics on;
+proc glm data=bweight;
+  class Black Married Boy Visit MomEdLevel MomSmoke;
+  model weight = Black Married Boy MomEdLevel MomAge*MomSmoke MomWtGain*Boy
+/ solution e;
+run;
+ods graphics off;
+```
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/resultados_gml_3.png)
+
+```sas
+ods graphics on;
+proc glm data=bweight;
+  class Black Married Boy Visit MomEdLevel MomSmoke;
+  model weight = MomWtGain Boy MomAge*Boy MomAge*MomSmoke Black*MomSmoke Married*MomSmoke
+/ solution e;
+run;
+
+ods graphics off;
+```
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/resultados_gml_4.png)
+
+Nos quedamos con el primer modelo que es el que menor R2 tiene: 0.094525. 
+
+Por lo tanto nuestro modelo champion es: **MomWtGain Black Married Boy MomAge*MomSmoke**
+
+## Data Miner
+
+Vamos a usar dataminer para hacer una comparación de modelos entre un GML y una red neuronal. Para ello creamos una fuente de datos con el dataset de los datos cocinados. 
+
+A continuación creamos un diagrama en el que insertamos la fuentes de datos.
+
+Luego insertamos un nodo de partición de datos y cambiamos los conjuntos a:
+
+* Entrenamiento: 70
+* Validacion: 15
+* Pruebas: 15
+
+Luego inclimos un nodo HP GLM  y otro nodo HP Red neuronal.
+
+Por último incluimos un nodo de comparación de modelos. 
+
+El diagrama quedaría así:
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/diagrama_miner.png)
+
+Tras ejecutar el diagrama obtenemos estos resultados:
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_ajuste.png)
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_puntuacion.png)
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_clasificacion.png)
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_output.png)
