@@ -633,13 +633,25 @@ ods graphics off;
 ```
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/resultados_gml_4.png)
 
-Nos quedamos con el primer modelo que es el que menor R2 tiene: 0.094525. 
+Nos quedamos con el primer modelo que es el que menor R2 tiene: 0.094525.
 
 Por lo tanto nuestro modelo champion es: **MomWtGain Black Married Boy MomAge*MomSmoke**
 
+Esta es la tabla de estimaciones que obtenemos de nuestro modelo
+
+![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/estimaciones.png)
+
+Por lo tanto, según nuestro modelo, podemos estimar el valor de weigth con esta formula
+
+```
+weight = 3190.382001 + (MomWtGain * 6.524968) + (Black0 * 147.005331) + (Married * 63.218208) + (Boy * 103.807576) + (MomAge*MomSmoke0 * 6.954765) + (MomAge*MomSmoke1 * 0.632864 ) + Epsilon
+```
+
+Donde Epsilon = error aleatorio
+
 ## Data Miner
 
-Vamos a usar dataminer para hacer una comparación de modelos entre un GML y una red neuronal. Para ello creamos una fuente de datos con el dataset de los datos cocinados. 
+Vamos a usar dataminer para hacer una comparación de modelos entre un GML y una red neuronal. Para ello creamos una fuente de datos con el dataset de los datos cocinados.
 
 A continuación creamos un diagrama en el que insertamos la fuentes de datos.
 
@@ -660,6 +672,18 @@ El diagrama quedaría así:
 Tras ejecutar el diagrama obtenemos estos resultados:
 
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_ajuste.png)
+
+Como podemos ver albos modelos tienen el mismo ASE de 6764. Sin embargo el la suma y la media de los errores cuadráticos son inferiores para la red neuronal. Por lo tanto podemos decir que el modelo de la red neuronal es algo más óptimo que modelo GLM que ha generado miner.
+
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_puntuacion.png)
+
+En las gráficas de puntuación podemos ver que ambos modelos son muy parecidos y describen lineas muy similares. 
+
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_clasificacion.png)
+
+En las gráficas de clasificación pasa lo mismo. Ambos modelos describen unas líneas muy parejas.
+
 ![](https://raw.githubusercontent.com/ivanrumo/KC_Practica_DataMining/master/img/miner_output.png)
+
+En los datos de salida podemos ver de otra forma los datos de los dos modelos. al igual que en la tabla de ajuste y en las gráficas, vemos que ambos modelos tienen resultados muy similares, aunque en cifras absolutas podemos decir que el modelo de red neuronal da mejores resultados.
+
