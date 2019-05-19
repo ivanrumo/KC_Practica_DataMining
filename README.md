@@ -644,7 +644,7 @@ Esta es la tabla de estimaciones que obtenemos de nuestro modelo
 Por lo tanto, según nuestro modelo, podemos estimar el valor de weigth con esta formula
 
 ```
-weight = 3190.382001 + (MomWtGain * 6.524968) + (Black0 * 147.005331) + (Married * 63.218208) + (Boy * 103.807576) + (MomAge*MomSmoke0 * 6.954765) + (MomAge*MomSmoke1 * 0.632864 ) + Epsilon
+weight = 3190.382001 + (MomWtGain * 6.524968) + (Black * 147.005331) + (Married * 63.218208) + (Boy * 103.807576) + (MomAge*MomSmoke0 * 6.954765) + (MomAge*MomSmoke1 * 0.632864 ) + Epsilon
 ```
 
 Donde Epsilon = error aleatorio
