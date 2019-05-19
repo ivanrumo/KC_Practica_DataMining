@@ -649,6 +649,8 @@ weight = 3190.382001 + (MomWtGain * 6.524968) + (Black * 147.005331) + (Married 
 
 Donde Epsilon = error aleatorio
 
+Sinceramente no tengo ni idea de si esta formula es correcta. En las clases no hemos visto ningún caso parecido. En la consulta que he hecho no he entendido como abordar esta parte. 
+
 ## Data Miner
 
 Vamos a usar dataminer para hacer una comparación de modelos entre un GML y una red neuronal. Para ello creamos una fuente de datos con el dataset de los datos cocinados.
@@ -661,7 +663,7 @@ Luego insertamos un nodo de partición de datos y cambiamos los conjuntos a:
 * Validacion: 15
 * Pruebas: 15
 
-Luego inclimos un nodo HP GLM  y otro nodo HP Red neuronal.
+Luego incluimos un nodo HP GLM  y otro nodo HP Red neuronal.
 
 Por último incluimos un nodo de comparación de modelos. 
 
